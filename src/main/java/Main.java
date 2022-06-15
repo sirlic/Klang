@@ -4,7 +4,7 @@ import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.tree.*;
 
 import java.util.BitSet;
-
+import com.tictactec.ta.lib.*;
 public class Main {
     public static void main(String[] args) {
         String len = "v:=1;b:='sf';b:=\"v\";b:=v;a:=1;IaaF(a,2,3)+If(if(1,2,3),2,3)*a;IF(1,2,3)+If(if(1,2,3),2,3)*2;";
@@ -35,7 +35,7 @@ public class Main {
         });
 
         KlangParser.ProgContext prog = parser.prog();
-        KLangInterpreter kLangInterpreter = new KLangInterpreter(new TFunCaller()) {
+        KLangInterpreter kLangInterpreter = new KLangInterpreter(new TFunCaller(),new VarResolver()) {
             @Override
             public void exitEveryRule(ParserRuleContext ctx) {
                 super.exitEveryRule(ctx);

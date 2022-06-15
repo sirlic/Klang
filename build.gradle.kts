@@ -15,6 +15,7 @@ repositories {
         implementation(kotlin("stdlib"))
         antlr("org.antlr:antlr4:4.5")
         implementation("org.antlr:antlr4-runtime:4.7.1")
+        implementation("com.tictactec:ta-lib:0.4.0")
     }
     tasks.generateGrammarSource {
         maxHeapSize = "64m"

@@ -6,21 +6,15 @@ import java.util.*;
 
 public class KLangInterpreter extends KlangBaseListener {
     private final String TAG = "KLangInterpreter";
-    private Map<String,KValue> mValMap = new HashMap<>();
     private Stack<KValue> mStack = new Stack<>();
 
-    public void setValMap(String val,KValue value) {
-        mValMap.put(val,value);
-    }
-
-    public KValue getValue(String val) {
-        return mValMap.get(val);
-    }
 
     private IFunCaller mFunCaller;
+    private VarResolver mVarResolver;
 
-    public KLangInterpreter(IFunCaller caller) {
+    public KLangInterpreter(IFunCaller caller,VarResolver varResolver) {
         mFunCaller = caller;
+        mVarResolver = varResolver;
     }
     @Override
     public void exitEveryRule(ParserRuleContext ctx) {
@@ -46,7 +40,7 @@ public class KLangInterpreter extends KlangBaseListener {
     public void exitAssignmentStatm(KlangParser.AssignmentStatmContext ctx) {
         KValue value = mStack.pop();
         TerminalNode key = ctx.ID(0);
-        mValMap.put(key.getText(),value);
+        mVarResolver.setValMap(key.getText(),value);
         Log.w(TAG,"exitAssignmentStatm "+key.getText()+"-"+value);
     }
 
@@ -84,7 +78,13 @@ public class KLangInterpreter extends KlangBaseListener {
 
     @Override
     public void exitCaret(KlangParser.CaretContext ctx) {
-        super.exitCaret(ctx);
+        KValue v2 = mStack.pop();
+        KValue v1 = mStack.pop();
+        if (!v1.isBoolean() || !v2.isBoolean()) {
+            throwErr("");
+        }
+        boolean ret = v1.asBoolean() ^ v2.asBoolean();
+        mStack.add(new KValue(ret));
     }
 
     @Override
@@ -123,7 +123,7 @@ public class KLangInterpreter extends KlangBaseListener {
         for (int i = 0; i < expr.size(); i++) {
             KValue value = mStack.pop();
             if (value.isString()) {
-                KValue kValue = mValMap.get(value.asString());
+                KValue kValue = mVarResolver.resolve(value.asString());
                 if (kValue != null) {
                     value = kValue;
                 }
@@ -216,7 +216,7 @@ public class KLangInterpreter extends KlangBaseListener {
     @Override
     public void exitVariable(KlangParser.VariableContext ctx) {
         KValue value = new KValue(String.valueOf(ctx.getText()));
-        KValue kValue = mValMap.get(value.asString());
+        KValue kValue = mVarResolver.resolve(value.asString());
         if (kValue != null) {
             value = kValue;
         }
