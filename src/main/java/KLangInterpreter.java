@@ -214,17 +214,23 @@ public class KLangInterpreter extends KlangBaseListener {
     }
 
     @Override
-    public void exitId(KlangParser.IdContext ctx) {
+    public void exitVariable(KlangParser.VariableContext ctx) {
         KValue value = new KValue(String.valueOf(ctx.getText()));
         KValue kValue = mValMap.get(value.asString());
         if (kValue != null) {
             value = kValue;
         }
         mStack.add(value);
-        Log.w(TAG,"exitId "+ctx.getText());
+        Log.w(TAG,"exitVariable "+ctx.getText());
     }
 
-//    @Override
+    @Override
+    public void exitString(KlangParser.StringContext ctx) {
+        mStack.add(new KValue(ctx.getText()));
+        Log.w(TAG,"exitString "+ctx.getText());
+    }
+
+    //    @Override
 //    public void exitBool(KlangParser.BoolContext ctx) {
 //        mStack.add(new KValue(Boolean.valueOf(ctx.getText())));
 //        Log.w(TAG,"exitBool");

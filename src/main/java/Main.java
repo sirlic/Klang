@@ -7,7 +7,7 @@ import java.util.BitSet;
 
 public class Main {
     public static void main(String[] args) {
-        String len = "a:=1;IaaF(a,2,3)+If(if(1,2,3),2,3)*a;IF(1,2,3)+If(if(1,2,3),2,3)*2;";
+        String len = "v:=1;b:='sf';b:=\"v\";b:=v;a:=1;IaaF(a,2,3)+If(if(1,2,3),2,3)*a;IF(1,2,3)+If(if(1,2,3),2,3)*2;";
         ANTLRInputStream input = new ANTLRInputStream(len);
         KlangLexer lexer = new KlangLexer(input);
         CommonTokenStream tokens = new CommonTokenStream(lexer);

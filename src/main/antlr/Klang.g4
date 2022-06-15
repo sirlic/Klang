@@ -25,7 +25,8 @@ expr
     | expr (AND) expr #and
     | expr (OR) expr #or
     | SCIENTIFIC_NUMBER #number
-    | ID #id
+    | ID #variable
+    | String #string
     ;
 
 AssignmentOperator
@@ -41,7 +42,10 @@ exprList
     ;
 
 ID  :   LETTER (LETTER | [0-9])* ;
-
+String
+ : ["] ( ~["\r\n\\] | '\\' ~[\r\n] )* ["]
+ | ['] ( ~['\r\n\\] | '\\' ~[\r\n] )* [']
+ ;
 fragment
 LETTER : [a-zA-Z_] ;
 
