@@ -24,8 +24,9 @@ expr
     | expr (NOTEQUAL) expr #notequal
     | expr (AND) expr #and
     | expr (OR) expr #or
-    | ID #id
     | SCIENTIFIC_NUMBER #number
+    | Bool #bool
+    | ID #id
     ;
 
 AssignmentOperator
@@ -72,6 +73,11 @@ RBRACK : ']';
 SEMI : ';';
 COMMA : ',';
 DOT : '.';
+
+fragment Bool
+ : 'true'
+ | 'false'
+ ;
 
 SCIENTIFIC_NUMBER
    : NUMBER ((E1 | E2) SIGN? NUMBER)?
