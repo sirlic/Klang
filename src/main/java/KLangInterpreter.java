@@ -17,7 +17,11 @@ public class KLangInterpreter extends KlangBaseListener {
         return mValMap.get(val);
     }
 
+    private IFunCaller mFunCaller;
 
+    public KLangInterpreter(IFunCaller caller) {
+        mFunCaller = caller;
+    }
     @Override
     public void exitEveryRule(ParserRuleContext ctx) {
         super.exitEveryRule(ctx);
@@ -33,14 +37,17 @@ public class KLangInterpreter extends KlangBaseListener {
     public void exitStat(KlangParser.StatContext ctx) {
         super.exitStat(ctx);
         if (ctx.expr() != null) {
-
+            KValue value = mStack.pop();
+            Log.w(TAG,"exitStat "+ctx.getText() +"--"+value);
         }
     }
 
     @Override
     public void exitAssignmentStatm(KlangParser.AssignmentStatmContext ctx) {
-        List<TerminalNode> id = ctx.ID();
-        TerminalNode operator = ctx.AssignmentOperator();
+        KValue value = mStack.pop();
+        TerminalNode key = ctx.ID(0);
+        mValMap.put(key.getText(),value);
+        Log.w(TAG,"exitAssignmentStatm "+key.getText()+"-"+value);
     }
 
     @Override
@@ -68,6 +75,11 @@ public class KLangInterpreter extends KlangBaseListener {
     @Override
     public void exitBang(KlangParser.BangContext ctx) {
         super.exitBang(ctx);
+        KValue value = mStack.pop();
+        if (!value.isBoolean()) {
+            throwErr("");
+        }
+        mStack.add(new KValue(!value.asBoolean()));
     }
 
     @Override
@@ -109,18 +121,20 @@ public class KLangInterpreter extends KlangBaseListener {
         List<KlangParser.ExprContext> expr = exprListContext.expr();
         Stack<KValue> values = new Stack<>();
         for (int i = 0; i < expr.size(); i++) {
-            values.add(mStack.pop());
+            KValue value = mStack.pop();
+            if (value.isString()) {
+                KValue kValue = mValMap.get(value.asString());
+                if (kValue != null) {
+                    value = kValue;
+                }
+            }
+            values.add(value);
         }
-        if ("if".equals(funName.getText().toLowerCase())) {
-            funIf(values.pop(),values.pop(),values.pop());
+        if (mFunCaller != null) {
+            KValue value = mFunCaller.invoke(funName.getText(), values);
+            mStack.add(value);
         }
-        Log.w(TAG,"exitEveryRule:"+ctx.getText()+"----");
-    }
-
-    private void funIf(KValue pop, KValue pop1, KValue pop2) {
-        mStack.add(new KValue( 1d));
-
-        System.out.println("fun"+"ad");
+        Log.w(TAG,"exitFun:"+ctx.getText()+"----");
     }
 
     @Override
@@ -201,13 +215,20 @@ public class KLangInterpreter extends KlangBaseListener {
 
     @Override
     public void exitId(KlangParser.IdContext ctx) {
-
+        KValue value = new KValue(String.valueOf(ctx.getText()));
+        KValue kValue = mValMap.get(value.asString());
+        if (kValue != null) {
+            value = kValue;
+        }
+        mStack.add(value);
+        Log.w(TAG,"exitId "+ctx.getText());
     }
 
-    @Override
-    public void exitBool(KlangParser.BoolContext ctx) {
-        mStack.add(new KValue(Boolean.valueOf(ctx.getText())));
-    }
+//    @Override
+//    public void exitBool(KlangParser.BoolContext ctx) {
+//        mStack.add(new KValue(Boolean.valueOf(ctx.getText())));
+//        Log.w(TAG,"exitBool");
+//    }
 
     @Override
     public void exitNumber(KlangParser.NumberContext ctx) {

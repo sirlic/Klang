@@ -25,7 +25,6 @@ expr
     | expr (AND) expr #and
     | expr (OR) expr #or
     | SCIENTIFIC_NUMBER #number
-    | Bool #bool
     | ID #id
     ;
 
@@ -74,7 +73,7 @@ SEMI : ';';
 COMMA : ',';
 DOT : '.';
 
-fragment Bool
+fragment BOOL
  : 'true'
  | 'false'
  ;
