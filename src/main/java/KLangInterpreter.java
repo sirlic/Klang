@@ -46,16 +46,15 @@ public class KLangInterpreter extends KlangBaseListener {
 
     @Override
     public void exitAdd(KlangParser.AddContext ctx) {
-        KValue v2 = mStack.pop();
-        KValue v1 = mStack.pop();
-
-        mStack.add(binaryOperatore("+",v2, v1));
+        KValue right = mStack.pop();
+        KValue left = mStack.pop();
+        mStack.add(binaryOperatore("+",left, right));
         Log.w(TAG,"exitAdd " + ctx.getText());
     }
 
     private KValue binaryOperatore(String op,KValue left, KValue right) {
         if (right.isNumber() && left.isNumber()) {
-            Double ret = op(op,right.asDouble() ,left.asDouble());
+            Double ret = op(op,right ,left);
             return new KValue(ret);
         }
         if (right.isList() && left.isList()) {
@@ -63,40 +62,67 @@ public class KLangInterpreter extends KlangBaseListener {
             List<KValue> v1List = right.asList();
             List<KValue> v2List = left.asList();
             for (int i=0;i<v1List.size();i++) {
-                ret.add(new KValue(op(op,v1List.get(i).asDouble() , v2List.get(i).asDouble())));
+                ret.add(new KValue(op(op,v1List.get(i) , v2List.get(i))));
             }
             return  new KValue(ret);
         }
-        Double d;
+        KValue d;
         List<KValue> list;
         if (right.isList()) {
             list = right.asList();
-            d = left.asDouble();
+            d = left;
         } else {
-            d = right.asDouble();
+            d = right;
             list = left.asList();
         }
         ArrayList<KValue> ret = new ArrayList<>();
         for (int i=0;i<list.size();i++) {
-            ret.add(new KValue(op(op,list.get(i).asDouble() , d)));
+            ret.add(new KValue(op(op,list.get(i) , d)));
         }
         return new KValue(ret);
     }
 
-    private Double op(String op,Double left,Double right) {
+    private Double op(String op,KValue left,KValue right) {
         Double ret = null;
         switch (op) {
             case "+":
-                ret = left + right;
+                ret = left.asDouble() + right.asDouble();
                 break;
             case "-":
-                ret = left - right;
+                ret = left.asDouble() - right.asDouble();
                 break;
             case "*":
-                ret = left * right;
+                ret = left.asDouble() * right.asDouble();
                 break;
             case "/":
-                ret = left / right;
+                ret = left.asDouble() / right.asDouble();
+                break;
+            case "!=":
+                ret = left.asDouble() != right.asDouble() ? 1d : 0d;
+                break;
+            case "==":
+                ret = left.asDouble() == right.asDouble() ? 1d : 0d;
+                break;
+            case "<":
+                ret = left.asDouble() < right.asDouble() ? 1d : 0d;
+                break;
+            case "<=":
+                ret = left.asDouble() <= right.asDouble() ? 1d : 0d;
+                break;
+            case ">":
+                ret = left.asDouble() > right.asDouble() ? 1d : 0d;
+                break;
+            case ">=":
+                ret = left.asDouble() >= right.asDouble() ? 1d : 0d;
+                break;
+            case "||":
+                ret = left.asBoolean() || right.asBoolean() ? 1d : 0d;
+                break;
+            case "&&":
+                ret = left.asBoolean() && right.asBoolean() ? 1d : 0d;
+                break;
+            case "^":
+                ret = left.asBoolean() ^ right.asBoolean() ? 1d : 0d;
                 break;
             default:
                 break;
@@ -106,51 +132,48 @@ public class KLangInterpreter extends KlangBaseListener {
 
     @Override
     public void exitAnd(KlangParser.AndContext ctx) {
-        KValue v2 = mStack.pop();
-        KValue v1 = mStack.pop();
-        if (!v1.isBoolean() || !v2.isBoolean()) {
-            throwErr("");
-        }
-        mStack.add(new KValue(v1.asBoolean() && v2.asBoolean()));
+        KValue right = mStack.pop();
+        KValue left = mStack.pop();
+        mStack.add(binaryOperatore("&&",left, right));
     }
 
     @Override
     public void exitBang(KlangParser.BangContext ctx) {
-        super.exitBang(ctx);
         KValue value = mStack.pop();
-        if (!value.isBoolean()) {
+        if (value.isString()) {
             throwErr("");
         }
-        mStack.add(new KValue(!value.asBoolean()));
+        if (value.isNumber()) {
+            mStack.add(new KValue(!value.asBoolean()));
+        }
+        if (value.isList()) {
+            ArrayList<KValue> ret = new ArrayList<>();
+            for (int i = 0; i < value.asList().size(); i++) {
+                ret.add(new KValue(!value.asList().get(i).asBoolean()));
+            }
+            mStack.add(new KValue(ret));
+        }
     }
 
     @Override
     public void exitCaret(KlangParser.CaretContext ctx) {
-        KValue v2 = mStack.pop();
-        KValue v1 = mStack.pop();
-        if (!v1.isBoolean() || !v2.isBoolean()) {
-            throwErr("");
-        }
-        boolean ret = v1.asBoolean() ^ v2.asBoolean();
-        mStack.add(new KValue(ret));
+        KValue right = mStack.pop();
+        KValue left = mStack.pop();
+        mStack.add(binaryOperatore("^",left, right));
     }
 
     @Override
     public void exitDiv(KlangParser.DivContext ctx) {
-        KValue v2 = mStack.pop();
-        KValue v1 = mStack.pop();
-        mStack.add(binaryOperatore("/",v2, v1));
+        KValue right = mStack.pop();
+        KValue left = mStack.pop();
+        mStack.add(binaryOperatore("/",left, right));
     }
 
     @Override
     public void exitEqual(KlangParser.EqualContext ctx) {
-        KValue v2 = mStack.pop();
-        KValue v1 = mStack.pop();
-        if (!v1.isNumber() || !v2.isNumber()) {
-            throwErr("");
-        }
-        boolean ret = v1.asDouble() == v2.asDouble();
-        mStack.add(new KValue(ret));
+        KValue right = mStack.pop();
+        KValue left = mStack.pop();
+        mStack.add(binaryOperatore("==",left, right));
     }
 
     @Override
@@ -183,73 +206,50 @@ public class KLangInterpreter extends KlangBaseListener {
 
     @Override
     public void exitGe(KlangParser.GeContext ctx) {
-        KValue v2 = mStack.pop();
-        KValue v1 = mStack.pop();
-        if (!v1.isNumber() || !v2.isNumber()) {
-            throwErr("");
-        }
-        boolean ret = v1.asDouble() >= v2.asDouble();
-        mStack.add(new KValue(ret));
+        KValue right = mStack.pop();
+        KValue left = mStack.pop();
+        mStack.add(binaryOperatore(">=",left, right));
     }
 
     @Override
     public void exitGt(KlangParser.GtContext ctx) {
-        KValue v2 = mStack.pop();
-        KValue v1 = mStack.pop();
-        if (!v1.isNumber() || v2.isNumber()) {
-            throwErr("");
-        }
-        boolean ret = v1.asDouble() > v2.asDouble();
-        mStack.add(new KValue( ret));
+        KValue right = mStack.pop();
+        KValue left = mStack.pop();
+        mStack.add(binaryOperatore(">",left, right));
     }
 
     @Override
     public void exitLe(KlangParser.LeContext ctx) {
-        KValue v2 = mStack.pop();
-        KValue v1 = mStack.pop();
-        if (!v1.isNumber() || !v2.isNumber()) {
-            throwErr("");
-        }
-        boolean ret = v1.asDouble() <= (Double) v2.asDouble();
-        mStack.add(new KValue( ret));
+        KValue right = mStack.pop();
+        KValue left = mStack.pop();
+        mStack.add(binaryOperatore("<=",left, right));
     }
 
     @Override
     public void exitLt(KlangParser.LtContext ctx) {
-        KValue v2 = mStack.pop();
-        KValue v1 = mStack.pop();
-        if (!v1.isNumber() || !v2.isNumber()) {
-            throwErr("");
-        }
-        boolean ret = v1.asDouble() < v2.asDouble();
-        mStack.add(new KValue(ret));
+        KValue right = mStack.pop();
+        KValue left = mStack.pop();
+        mStack.add(binaryOperatore("<",left, right));
     }
 
     @Override
     public void exitMul(KlangParser.MulContext ctx) {
-        KValue v2 = mStack.pop();
-        KValue v1 = mStack.pop();
-        mStack.add(binaryOperatore("*",v2, v1));
+        KValue right = mStack.pop();
+        KValue left = mStack.pop();
+        mStack.add(binaryOperatore("*",left, right));
     }
 
     @Override
     public void exitNegative(KlangParser.NegativeContext ctx) {
         KValue v = mStack.pop();
-        if (!v.isNumber()) {
-            throwErr("");
-        }
         mStack.add(binaryOperatore("-",new KValue(0), v));
     }
 
     @Override
     public void exitNotequal(KlangParser.NotequalContext ctx) {
-        KValue v2 = mStack.pop();
-        KValue v1 = mStack.pop();
-        if (!v1.isNumber() || !v2.isNumber()) {
-            throwErr("");
-        }
-        boolean ret = v1.asDouble() != v2.asDouble();
-        mStack.add(new KValue(ret));
+        KValue right = mStack.pop();
+        KValue left = mStack.pop();
+        mStack.add(binaryOperatore("!=",left, right));
     }
 
     @Override
@@ -282,10 +282,9 @@ public class KLangInterpreter extends KlangBaseListener {
 
     @Override
     public void exitOr(KlangParser.OrContext ctx) {
-        KValue v2 = mStack.pop();
-        KValue v1 = mStack.pop();
-
-        mStack.add(new KValue(v1.asBoolean() || v2.asBoolean()));
+        KValue right = mStack.pop();
+        KValue left = mStack.pop();
+        mStack.add(binaryOperatore("||",left, right));
     }
 
     @Override
@@ -295,9 +294,9 @@ public class KLangInterpreter extends KlangBaseListener {
 
     @Override
     public void exitSub(KlangParser.SubContext ctx) {
-        KValue v2 = mStack.pop();
-        KValue v1 = mStack.pop();
-        mStack.add(binaryOperatore("-",v2, v1));
+        KValue right = mStack.pop();
+        KValue left = mStack.pop();
+        mStack.add(binaryOperatore("-",left, right));
     }
 
     public void value() {

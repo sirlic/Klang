@@ -18,13 +18,13 @@ public class KValue implements Comparable<KValue> {
         }
         value = v;
         // only accept boolean, list, number or string types
-        if(!(isBoolean() || isList() || isNumber() || isString())) {
+        if(!(isList() || isNumber() || isString())) {
             throw new RuntimeException("invalid data type: " + v + " (" + v.getClass() + ")");
         }
     }
 
     public Boolean asBoolean() {
-        return (Boolean)value;
+        return asDouble() != 0;
     }
 
     public Double asDouble() {
@@ -86,10 +86,6 @@ public class KValue implements Comparable<KValue> {
     @Override
     public int hashCode() {
         return value.hashCode();
-    }
-
-    public boolean isBoolean() {
-        return value instanceof Boolean;
     }
 
     public boolean isNumber() {
